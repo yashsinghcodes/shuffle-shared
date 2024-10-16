@@ -9654,13 +9654,13 @@ func GetSpecificWorkflow(resp http.ResponseWriter, request *http.Request) {
 			//user.ActiveOrg.Id = workflow.OrgId
 
 			workflow = &Workflow{
-				Name:           workflow.Name,
-				ID:			 	workflow.ID,
-				Owner:          workflow.Owner,
-				OrgId:          workflow.OrgId,
+				Name:  workflow.Name,
+				ID:    workflow.ID,
+				Owner: workflow.Owner,
+				OrgId: workflow.OrgId,
 
 				OutputYields:   workflow.OutputYields,
-				Sharing: 		workflow.Sharing,
+				Sharing:        workflow.Sharing,
 				Description:    workflow.Description,
 				InputQuestions: workflow.InputQuestions,
 				InputMarkdown:  workflow.InputMarkdown,
@@ -23941,7 +23941,7 @@ func HandleInternalProxy(handler *http.Client) *http.Client {
 
 	transport := &http.Transport{}
 
-	if (len(httpProxy) > 0 || len(httpsProxy) > 0) && (strings.ToLower(httpProxy) != "noproxy" || strings.ToLower(httpsProxy) != "noproxy") {
+	if (len(httpProxy) > 0 || len(httpsProxy) > 0) && (strings.ToLower(httpProxy) != "noproxy" || strings.ToLower(httpsProxy) != "noproxy" || strings.ToLower(httpProxy) != "" || strings.ToLower(httpsProxy) != "") {
 		if len(httpProxy) > 0 && strings.ToLower(httpProxy) != "noproxy" {
 			log.Printf("[INFO] Running with HTTP proxy %s (env: HTTP_PROXY)", httpProxy)
 
@@ -23952,7 +23952,7 @@ func HandleInternalProxy(handler *http.Client) *http.Client {
 			}
 		}
 
-		if len(httpsProxy) > 0 && strings.ToLower(httpsProxy) != "noproxy" {
+		if len(httpsProxy) > 0 && (strings.ToLower(httpsProxy) != "noproxy" || strings.ToLower(httpsProxy) != "") {
 			log.Printf("[INFO] Running with HTTPS proxy %s (env: HTTPS_PROXY)", httpsProxy)
 
 			url_i := url.URL{}
@@ -29205,7 +29205,7 @@ func HandleUserPrivateTraining(resp http.ResponseWriter, request *http.Request) 
 }
 
 // An API to ONLY return PUBLIC forms for an org
-// A public form = Workflow with "sharing": "form" 
+// A public form = Workflow with "sharing": "form"
 func HandleGetOrgForms(resp http.ResponseWriter, request *http.Request) {
 	cors := HandleCors(resp, request)
 	if cors {
@@ -29275,14 +29275,14 @@ func HandleGetOrgForms(resp http.ResponseWriter, request *http.Request) {
 	randomUser := User{
 		Id: randomUserId,
 		ActiveOrg: OrgMini{
-			Id: orgId,
+			Id:   orgId,
 			Name: org.Name,
 		},
 	}
 
-	if validAuth { 
+	if validAuth {
 		randomUser = user
-	} 
+	}
 
 	workflows, err := GetAllWorkflowsByQuery(ctx, randomUser, 50, "")
 	if err != nil {
@@ -29301,7 +29301,7 @@ func HandleGetOrgForms(resp http.ResponseWriter, request *http.Request) {
 
 	relevantForms := []Workflow{}
 	for _, workflow := range workflows {
-		if validAuth { 
+		if validAuth {
 			if len(workflow.InputQuestions) == 0 && len(workflow.InputMarkdown) == 0 {
 				continue
 			}
@@ -29318,13 +29318,13 @@ func HandleGetOrgForms(resp http.ResponseWriter, request *http.Request) {
 
 			// Overwrite to remove anything unecessary for most locations
 			workflow = Workflow{
-				Name:           workflow.Name,
-				ID:			 	workflow.ID,
-				Owner:          workflow.Owner,
-				OrgId:          workflow.OrgId,
+				Name:  workflow.Name,
+				ID:    workflow.ID,
+				Owner: workflow.Owner,
+				OrgId: workflow.OrgId,
 
 				OutputYields:   workflow.OutputYields,
-				Sharing: 		workflow.Sharing,
+				Sharing:        workflow.Sharing,
 				Description:    workflow.Description,
 				InputQuestions: workflow.InputQuestions,
 				InputMarkdown:  workflow.InputMarkdown,
@@ -29358,7 +29358,7 @@ func HandleGetOrgForms(resp http.ResponseWriter, request *http.Request) {
 func SendDeleteWorkflowRequest(childWorkflow Workflow, request *http.Request) error {
 	log.Printf("[INFO] Attempting to delete child workflow %s", childWorkflow.ID)
 
-	// Send a Delete request to the workflows 
+	// Send a Delete request to the workflows
 	baseUrl := "https://shuffler.io"
 	if len(os.Getenv("BASE_URL")) > 0 {
 		baseUrl = os.Getenv("BASE_URL")
@@ -29382,7 +29382,6 @@ func SendDeleteWorkflowRequest(childWorkflow Workflow, request *http.Request) er
 		return err
 	}
 
-
 	// Look for Authorization
 	for key, values := range request.Header {
 		if len(values) > 0 {
@@ -29395,7 +29394,7 @@ func SendDeleteWorkflowRequest(childWorkflow Workflow, request *http.Request) er
 		req.AddCookie(cookie)
 	}
 
-	// Ensure it points correctly, and that you can only delete the ones you have access to 
+	// Ensure it points correctly, and that you can only delete the ones you have access to
 	if len(childWorkflow.OrgId) > 0 {
 		req.Header.Add("Org-Id", childWorkflow.OrgId)
 	}
