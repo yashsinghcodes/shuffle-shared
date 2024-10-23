@@ -928,21 +928,21 @@ func HandleGetOrg(resp http.ResponseWriter, request *http.Request) {
 		// This makes it possible to walk around in the UI for the org
 
 		/*
-		if user.ActiveOrg.Id != org.Id {
-			log.Printf("[AUDIT] User %s (%s) is admin and has access to org %s. Updating active org to this one.", user.Username, user.Id, org.Id)
-			user.ActiveOrg.Id = org.Id
-			user.ActiveOrg.Name = org.Name
-			user.Role = "admin"
+			if user.ActiveOrg.Id != org.Id {
+				log.Printf("[AUDIT] User %s (%s) is admin and has access to org %s. Updating active org to this one.", user.Username, user.Id, org.Id)
+				user.ActiveOrg.Id = org.Id
+				user.ActiveOrg.Name = org.Name
+				user.Role = "admin"
 
-			SetUser(ctx, &user, false)
+				SetUser(ctx, &user, false)
 
-			DeleteCache(ctx, fmt.Sprintf("%s_workflows", user.ActiveOrg.Id))
-			DeleteCache(ctx, fmt.Sprintf("%s_workflows", user.Id))
-			DeleteCache(ctx, fmt.Sprintf("apps_%s", user.Id))
-			DeleteCache(ctx, fmt.Sprintf("apps_%s", user.ActiveOrg.Id))
-			DeleteCache(ctx, fmt.Sprintf("user_%s", user.Username))
-			DeleteCache(ctx, fmt.Sprintf("user_%s", user.Id))
-		}
+				DeleteCache(ctx, fmt.Sprintf("%s_workflows", user.ActiveOrg.Id))
+				DeleteCache(ctx, fmt.Sprintf("%s_workflows", user.Id))
+				DeleteCache(ctx, fmt.Sprintf("apps_%s", user.Id))
+				DeleteCache(ctx, fmt.Sprintf("apps_%s", user.ActiveOrg.Id))
+				DeleteCache(ctx, fmt.Sprintf("user_%s", user.Username))
+				DeleteCache(ctx, fmt.Sprintf("user_%s", user.Id))
+			}
 		*/
 
 	} else {
@@ -8539,7 +8539,6 @@ func SaveWorkflow(resp http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-
 	err = SetWorkflow(ctx, workflow, workflow.ID)
 	if err != nil {
 		log.Printf("[ERROR] Failed saving workflow to database: %s", err)
@@ -8584,7 +8583,6 @@ func SaveWorkflow(resp http.ResponseWriter, request *http.Request) {
 		Id:   user.ActiveOrg.Id,
 		Name: user.ActiveOrg.Name,
 	}
-
 
 	SetWorkflowRevision(ctx, workflow)
 	err = SetGitWorkflow(ctx, workflow, org)
@@ -9715,13 +9713,13 @@ func GetSpecificWorkflow(resp http.ResponseWriter, request *http.Request) {
 			//user.ActiveOrg.Id = workflow.OrgId
 
 			workflow = &Workflow{
-				Name:           workflow.Name,
-				ID:			 	workflow.ID,
-				Owner:          workflow.Owner,
-				OrgId:          workflow.OrgId,
+				Name:  workflow.Name,
+				ID:    workflow.ID,
+				Owner: workflow.Owner,
+				OrgId: workflow.OrgId,
 
 				OutputYields:   workflow.OutputYields,
-				Sharing: 		workflow.Sharing,
+				Sharing:        workflow.Sharing,
 				Description:    workflow.Description,
 				InputQuestions: workflow.InputQuestions,
 				InputMarkdown:  workflow.InputMarkdown,
@@ -9894,7 +9892,6 @@ func GetSpecificWorkflow(resp http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-
 	if workflow.Public {
 		workflow.BackupConfig = BackupConfig{}
 		workflow.ExecutingOrg = OrgMini{}
@@ -9907,7 +9904,7 @@ func GetSpecificWorkflow(resp http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	if workflow.BackupConfig.TokensEncrypted { 
+	if workflow.BackupConfig.TokensEncrypted {
 		parsedKey := fmt.Sprintf("%s_upload_token", workflow.OrgId)
 		newValue, err := HandleKeyDecryption([]byte(workflow.BackupConfig.UploadToken), parsedKey)
 		if err != nil {
@@ -13203,7 +13200,7 @@ func HandleLogin(resp http.ResponseWriter, request *http.Request) {
 				userdata.ActiveOrg.Id = innerorg.Id
 				userdata.ActiveOrg.Name = innerorg.Name
 				org = innerorg
-	
+
 				updateUser = true
 				break
 			}
@@ -22110,7 +22107,7 @@ func PrepareWorkflowExecution(ctx context.Context, workflow Workflow, request *h
 		err := json.Unmarshal([]byte(workflowExecution.ExecutionArgument), &validMap)
 		if err != nil {
 			log.Printf("[ERROR] Failed to unmarshal execution argument: %s", err)
-		} 
+		}
 
 		// Overwriting it either way. Input NEEDS to be valid for map[string]interface{}{}
 		discoveredUser, err := HandleApiAuthentication(nil, request)
@@ -29289,9 +29286,16 @@ func checkExecutionStatus(ctx context.Context, exec *WorkflowExecution) *Workflo
 	workflowChanged = true
 	workflow.Validation.ValidationRan = true
 	workflow.Validation.ExecutionId = exec.ExecutionId
+
+	// Check if the workflow even exist or not (fix after the outage)
+	_, err = GetWorkflow(ctx, workflow.ID)
+	if err != nil {
+		workflowChanged = false
+		log.Printf("[WARNING] Failed to get the workflow %s under execution %s", workflow.ID, exec.ExecutionId)
+	}
+
 	if workflowChanged {
 		workflow.Actions = originalActions
-
 		err = SetWorkflow(ctx, *workflow, workflow.ID)
 		if err != nil {
 			log.Printf("[ERROR] Failed updating workflow from execution validator. This is NOT critical as we keep cache %s: %s", workflow.ID, err)
@@ -29485,7 +29489,7 @@ func HandleUserPrivateTraining(resp http.ResponseWriter, request *http.Request) 
 }
 
 // An API to ONLY return PUBLIC forms for an org
-// A public form = Workflow with "sharing": form 
+// A public form = Workflow with "sharing": form
 func HandleGetOrgForms(resp http.ResponseWriter, request *http.Request) {
 	cors := HandleCors(resp, request)
 	if cors {
@@ -29555,14 +29559,14 @@ func HandleGetOrgForms(resp http.ResponseWriter, request *http.Request) {
 	randomUser := User{
 		Id: randomUserId,
 		ActiveOrg: OrgMini{
-			Id: orgId,
+			Id:   orgId,
 			Name: org.Name,
 		},
 	}
 
-	if validAuth { 
+	if validAuth {
 		randomUser = user
-	} 
+	}
 
 	workflows, err := GetAllWorkflowsByQuery(ctx, randomUser, 50, "")
 	if err != nil {
@@ -29581,7 +29585,7 @@ func HandleGetOrgForms(resp http.ResponseWriter, request *http.Request) {
 
 	relevantForms := []Workflow{}
 	for _, workflow := range workflows {
-		if validAuth { 
+		if validAuth {
 			if len(workflow.InputQuestions) == 0 && len(workflow.InputMarkdown) == 0 {
 				continue
 			}
@@ -29598,13 +29602,13 @@ func HandleGetOrgForms(resp http.ResponseWriter, request *http.Request) {
 
 			// Overwrite to remove anything unecessary for most locations
 			workflow = Workflow{
-				Name:           workflow.Name,
-				ID:			 	workflow.ID,
-				Owner:          workflow.Owner,
-				OrgId:          workflow.OrgId,
+				Name:  workflow.Name,
+				ID:    workflow.ID,
+				Owner: workflow.Owner,
+				OrgId: workflow.OrgId,
 
 				OutputYields:   workflow.OutputYields,
-				Sharing: 		workflow.Sharing,
+				Sharing:        workflow.Sharing,
 				Description:    workflow.Description,
 				InputQuestions: workflow.InputQuestions,
 				InputMarkdown:  workflow.InputMarkdown,
@@ -29638,7 +29642,7 @@ func HandleGetOrgForms(resp http.ResponseWriter, request *http.Request) {
 func SendDeleteWorkflowRequest(childWorkflow Workflow, request *http.Request) error {
 	log.Printf("[INFO] Attempting to delete child workflow %s", childWorkflow.ID)
 
-	// Send a Delete request to the workflows 
+	// Send a Delete request to the workflows
 	baseUrl := "https://shuffler.io"
 	if len(os.Getenv("BASE_URL")) > 0 {
 		baseUrl = os.Getenv("BASE_URL")
@@ -29662,7 +29666,6 @@ func SendDeleteWorkflowRequest(childWorkflow Workflow, request *http.Request) er
 		return err
 	}
 
-
 	// Look for Authorization
 	for key, values := range request.Header {
 		if len(values) > 0 {
@@ -29675,7 +29678,7 @@ func SendDeleteWorkflowRequest(childWorkflow Workflow, request *http.Request) er
 		req.AddCookie(cookie)
 	}
 
-	// Ensure it points correctly, and that you can only delete the ones you have access to 
+	// Ensure it points correctly, and that you can only delete the ones you have access to
 	if len(childWorkflow.OrgId) > 0 {
 		req.Header.Add("Org-Id", childWorkflow.OrgId)
 	}
