@@ -24,7 +24,7 @@ type LogRequest struct {
 }
 
 type PipelineRequest struct {
-	ID string `json:"id"`
+	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Type        string `json:"type"`
 	Command     string `json:"command"`
@@ -39,7 +39,7 @@ type PipelineRequest struct {
 
 type Pipeline struct {
 	Name        string   `json:"name" datastore:"name"`
-	ID		  	string   `json:"id" datastore:"id"`
+	ID          string   `json:"id" datastore:"id"`
 	Type        string   `json:"type" datastore:"type"`
 	Command     string   `json:"command" datastore:"command"`
 	Environment string   `json:"environment" datastore:"environment"`
@@ -4154,4 +4154,15 @@ type PipelineInfo struct {
 
 type PipelineInfoWrapper struct {
 	Pipelines []PipelineInfo `json:"pipelines"`
+}
+
+type ScalingConfig struct {
+	QueuePerMinute  int
+	ScalingInterval time.Duration
+
+	MaxScaleUpStep int
+	CooldownPeriod time.Duration
+
+	MinReplicas int
+	MaxReplicas int
 }
