@@ -1263,8 +1263,8 @@ type InputQuestion struct {
 }
 
 type FormControl struct {
-	InputMarkdown  string          `json:"input_markdown" datastore:"input_markdown,noindex"`
-	OutputYields   []string        `json:"output_yields" datastore:"output_yields"` // Defines the nodes that will YIELD their output to the frontend during execution
+	InputMarkdown string   `json:"input_markdown" datastore:"input_markdown,noindex"`
+	OutputYields  []string `json:"output_yields" datastore:"output_yields"` // Defines the nodes that will YIELD their output to the frontend during execution
 
 	FormWidth int64 `json:"form_width" datastore:"form_width"`
 }
@@ -4172,4 +4172,10 @@ type ScalingConfig struct {
 
 	MinReplicas int
 	MaxReplicas int
+}
+
+type RequestResponse struct {
+	Success bool   `json:"success"`
+	Reason  string `json:"reason"`
+	Details string `json:"details"`
 }

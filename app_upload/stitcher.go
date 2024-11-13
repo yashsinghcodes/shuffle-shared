@@ -154,6 +154,7 @@ func Copy(src, dst string) error {
 	}
 	return out.Close()
 }
+
 func ZipFiles(filename string, files []string) error {
 	newZipFile, err := os.Create(filename)
 	if err != nil {
@@ -845,7 +846,7 @@ func main() {
 	}
 
 	appname := "shuffle-tools"
-	appversion := "1.2.1"
+	appversion := "1.2.0"
 	err := deployConfigToBackend(appfolder, appname, appversion)
 	if err != nil {
 		log.Printf("[WARNING] Failed uploading config: %s", err)

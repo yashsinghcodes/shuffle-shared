@@ -6790,7 +6790,9 @@ func GetUserApps(ctx context.Context, userId string) ([]WorkflowApp, error) {
 							if strings.Contains("no matching index found", fmt.Sprintf("%s", err)) {
 								log.Printf("[ERROR] No more apps for %s in user app load? Breaking: %s.", userId, err)
 							} else {
-								log.Printf("[WARNING] No more apps for %s in user app load? Breaking: %s.", userId, err)
+								if !strings.Contains(fmt.Sprintf("%s", err), "no more items") {
+									log.Printf("[WARNING] Error in app loading: %s", err)
+								}
 							}
 
 							break
@@ -7676,7 +7678,7 @@ func ListChildWorkflows(ctx context.Context, originalId string) ([]Workflow, err
 		if err == nil {
 			cacheData := []byte(cache.([]uint8))
 			err = json.Unmarshal(cacheData, &workflows)
-			if err == nil {
+			if err == nil || len(workflows) > 0 {
 
 				sort.Slice(workflows, func(i, j int) bool {
 					return workflows[i].Edited > workflows[j].Edited
@@ -7748,7 +7750,7 @@ func ListChildWorkflows(ctx context.Context, originalId string) ([]Workflow, err
 
 		wrapped := WorkflowSearchWrapper{}
 		err = json.Unmarshal(respBody, &wrapped)
-		if err != nil {
+		if err != nil && len(wrapped.Hits.Hits) == 0 {
 			return workflows, err
 		}
 
@@ -7773,8 +7775,11 @@ func ListChildWorkflows(ctx context.Context, originalId string) ([]Workflow, err
 				innerWorkflow := Workflow{}
 				_, err := it.Next(&innerWorkflow)
 				if err != nil {
-					//log.Printf("[WARNING] Workflow iterator issue: %s", err)
-					break
+					if strings.Contains(fmt.Sprintf("%s", err), "cannot load field") {
+					} else {
+						//log.Printf("[WARNING] Workflow iterator issue: %s", err)
+						break
+					}
 				}
 
 				workflows = append(workflows, innerWorkflow)
@@ -7918,7 +7923,7 @@ func ListWorkflowRevisions(ctx context.Context, originalId string) ([]Workflow, 
 
 		wrapped := WorkflowSearchWrapper{}
 		err = json.Unmarshal(respBody, &wrapped)
-		if err != nil {
+		if err != nil && len(wrapped.Hits.Hits) == 0 {
 			return workflows, err
 		}
 
@@ -7943,8 +7948,11 @@ func ListWorkflowRevisions(ctx context.Context, originalId string) ([]Workflow, 
 				innerWorkflow := Workflow{}
 				_, err := it.Next(&innerWorkflow)
 				if err != nil {
-					//log.Printf("[WARNING] Workflow iterator issue: %s", err)
-					break
+					if strings.Contains(fmt.Sprintf("%s", err), "cannot load field") {
+					} else {
+						//log.Printf("[WARNING] Workflow iterator issue: %s", err)
+						break
+					}
 				}
 
 				workflows = append(workflows, innerWorkflow)
