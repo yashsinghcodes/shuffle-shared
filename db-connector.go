@@ -539,11 +539,11 @@ func SetWorkflowExecution(ctx context.Context, workflowExecution WorkflowExecuti
 	}
 
 	// This may get data from cache, hence we need to continuously set things in the database. Mainly as a precaution.
-	newexec, err := GetWorkflowExecution(ctx, workflowExecution.ExecutionId)
+	//newexec, err := GetWorkflowExecution(ctx, workflowExecution.ExecutionId)
 
-	HandleExecutionCacheIncrement(ctx, *newexec)
-	if !dbSave && err == nil && (newexec.Status == "FINISHED" || newexec.Status == "ABORTED") {
-		log.Printf("[INFO][%s] Already finished (set workflow) with status %s! Stopping the rest of the request for execution.", workflowExecution.ExecutionId, newexec.Status)
+	HandleExecutionCacheIncrement(ctx, workflowExecution)
+	if !dbSave && err == nil && (workflowExecution.Status == "FINISHED" || workflowExecution.Status == "ABORTED") {
+		log.Printf("[INFO][%s] Already finished (set workflow) with status %s! Stopping the rest of the request for execution.", workflowExecution.ExecutionId, workflowExecution.Status)
 		return nil
 	}
 
@@ -565,11 +565,15 @@ func SetWorkflowExecution(ctx context.Context, workflowExecution WorkflowExecuti
 		}
 	}
 
-	if newexec.Status == "FINISHED" || newexec.Status == "ABORTED" {
+	var newexec *WorkflowExecution
+
+	if workflowExecution.Status == "FINISHED" || workflowExecution.Status == "ABORTED" {
 		// Handles stat updates. Upgrading status to prevent timeouts for first iter of this
 		ctx = context.Background()
-		newexec = checkExecutionStatus(ctx, newexec)
+		newexec = checkExecutionStatus(ctx, &workflowExecution)
 	}
+
+	_ = newexec
 
 	// New struct, to not add body, author etc
 	//log.Printf("[DEBUG][%s] Adding execution to database, not just cache. Workflow: %s (%s)", workflowExecution.ExecutionId, workflowExecution.Workflow.Name, workflowExecution.Workflow.ID)

@@ -753,12 +753,22 @@ func RedirectUserRequest(w http.ResponseWriter, req *http.Request) {
 		Timeout: 120 * time.Second,
 	}
 
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		log.Printf("[ERROR] Issue in SSR body proxy: %s", err)
+//	body, err := ioutil.ReadAll(req.Body)
+//	if err != nil {
+//		log.Printf("[ERROR] Issue in SSR body proxy: %s", err)
+//		http.Error(w, err.Error(), http.StatusInternalServerError)
+//		return
+//	}
+
+	var buf bytes.Buffer
+	if _, err := io.CopyN(&buf, req.Body, 10<<20); err != nil && err != io.EOF {
+		log.Printf("[ERROR] Issue reading body for proxy: %s", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	req.Body.Close()
+	body := buf.Bytes()
 
 	//req.Body = ioutil.NopCloser(bytes.NewReader(body))
 	url := fmt.Sprintf("%s://%s%s", proxyScheme, proxyHost, req.RequestURI)
@@ -788,7 +798,6 @@ func RedirectUserRequest(w http.ResponseWriter, req *http.Request) {
 	}
 
 	defer newresp.Body.Close()
-	urlbody, err := ioutil.ReadAll(newresp.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
@@ -803,7 +812,10 @@ func RedirectUserRequest(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.WriteHeader(newresp.StatusCode)
-	w.Write(urlbody)
+	_, err = io.Copy(w, newresp.Body)
+	if err != nil {
+		log.Printf("[OPT] This is not working (1) \n\n")
+	}
 
 	// Need to clear cache in case user gets updated in db
 	// with a new session and such. This only forces a new search,
